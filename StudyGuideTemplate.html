@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Vulnerability Management Quiz - Full 50 Questions</title>
+<style>
+  body {
+    margin:0; padding:0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    display: flex; height: 100vh; overflow: hidden;
+  }
+  .sidebar {
+    width: 320px; background: #f4f6f8; border-right: 1px solid #ccc;
+    overflow-y: auto; padding: 10px;
+    box-sizing: border-box;
+  }
+  .sidebar h2 {
+    margin-top: 0; font-size: 1.2em; text-align: center;
+    margin-bottom: 12px;
+  }
+  .question-item {
+    padding: 8px 12px; margin-bottom: 6px; cursor: pointer;
+    border-radius: 5px; font-size: 14px; line-height: 1.2;
+    max-height: 3.4em; overflow: hidden; white-space: normal;
+    user-select: none;
+    border: 1px solid transparent;
+  }
+  .question-item.correct {
+    background-color: #d4edda;
+    color: #155724;
+    border-color: #c3e6cb;
+  }
+  .question-item.incorrect {
+    background-color: #f8d7da;
+    color: #721c24;
+    border-color: #f5c6cb;
+  }
+  .question-item.current {
+    background-color: #e3f2fd;
+    border-color: #64b5f6;
+    font-weight: 600;
+  }
+  .main {
+    flex: 1; padding: 30px 40px; overflow-y: auto; box-sizing: border-box;
+    background: #fff;
+    display: flex; flex-direction: column;
+  }
+  .question-text {
+    font-size: 1.3em; font-weight: 600; margin-bottom: 20px;
+    min-height: 80px;
+  }
+  .choices label {
+    display: block; margin-bottom: 15px; cursor: pointer;
+    font-size: 1.1em; user-select: none;
+    transition: color 0.3s ease;
+  }
+  .choices input[type="radio"] {
+    margin-right: 12px; cursor: pointer;
+  }
+  .choices label.correct {
+    color: green; font-weight: 700;
+  }
+  .choices label.incorrect {
+    color: red; font-weight: 700;
+  }
+  .feedback {
+    margin-top: 15px; font-weight: 600; font-size: 1.05em;
+  }
+  .feedback.correct {
+    color: green;
+  }
+  .feedback.incorrect {
+    color: red;
+  }
+  #next-btn {
+    margin-top: auto;
+    align-self: flex-start;
+    padding: 12px 30px;
+    font-size: 1.15em;
+    cursor: pointer;
+    border: none;
+    border-radius: 6px;
+    background-color: #007bff;
+    color: white;
+    transition: background-color 0.3s ease;
+    user-select: none;
+  }
+  #next-btn:hover:not(:disabled) {
+    background-color: #0056b3;
+  }
+  #next-btn:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+  }
+</style>
+</head>
+<body>
+
+  <div class="sidebar" id="sidebar">
+    <h2>Questions</h2>
+    <div id="question-list"></div>
+  </div>
+
+  <div class="main">
+    <div id="quiz-container"></div>
+    <button id="next-btn" disabled>Next Question</button>
+  </div>
+
+<script>
+  const questions = [
+    {
+      question: "Example Question",
+      choices: ["A", "B", "C", "D"],
+      correct: "A",
+      explanation: "Correct answer is Option A. Explanation."
+    }
+  ];
+
+  let currentIndex = 0;
+  const userAnswers = new Array(questions.length).fill(null);
+
+  const quizContainer = document.getElementById('quiz-container');
+  const nextBtn = document.getElementById('next-btn');
+  const questionList = document.getElementById('question-list');
+
+  function loadQuestion(index = 0) {
+    currentIndex = index;
+    const q = questions[currentIndex];
+    quizContainer.innerHTML = '';
+
+    const qText = document.createElement('div');
+    qText.className = 'question-text';
+    qText.textContent = `${currentIndex + 1}. ${q.question}`;
+    quizContainer.appendChild(qText);
+
+    const choicesDiv = document.createElement('div');
+    choicesDiv.className = 'choices';
+
+    q.choices.forEach(choice => {
+      const label = document.createElement('label');
+      label.htmlFor = `choice_${choice.replace(/\s+/g, '')}`;
+      label.textContent = choice;
+
+      const input = document.createElement('input');
+      input.type = 'radio';
+      input.name = 'answer';
+      input.id = `choice_${choice.replace(/\s+/g, '')}`;
+      input.value = choice;
+      input.disabled = userAnswers[currentIndex] !== null;
+      input.onclick = () => checkAnswer(choice);
+
+      label.prepend(input);
+      choicesDiv.appendChild(label);
+    });
+    quizContainer.appendChild(choicesDiv);
+
+    const feedback = document.createElement('div');
+    feedback.id = 'feedback';
+    feedback.className = 'feedback';
+    quizContainer.appendChild(feedback);
+
+    if (userAnswers[currentIndex]) {
+      showFeedback(userAnswers[currentIndex].isCorrect);
+      const labels = choicesDiv.querySelectorAll('label');
+      labels.forEach(label => {
+        const input = label.querySelector('input');
+        label.classList.remove('correct', 'incorrect');
+        if (input.value === questions[currentIndex].correct) {
+          label.classList.add('correct');
+        }
+        if (!userAnswers[currentIndex].isCorrect && input.value === userAnswers[currentIndex].selected) {
+          label.classList.add('incorrect');
+        }
+      });
+      nextBtn.disabled = false;
+    } else {
+      feedback.textContent = '';
+      nextBtn.disabled = true;
+    }
+
+    updateSidebar();
+  }
+
+  function checkAnswer(selectedChoice) {
+    const q = questions[currentIndex];
+    const isCorrect = selectedChoice === q.correct;
+    userAnswers[currentIndex] = { selected: selectedChoice, isCorrect: isCorrect };
+
+    document.querySelectorAll('input[name="answer"]').forEach(input => input.disabled = true);
+
+    const labels = document.querySelectorAll('.choices label');
+    labels.forEach(label => {
+      const input = label.querySelector('input');
+      label.classList.remove('correct', 'incorrect');
+      if (input.value === q.correct) {
+        label.classList.add('correct');
+      }
+      if (!isCorrect && input.value === selectedChoice) {
+        label.classList.add('incorrect');
+      }
+    });
+
+    showFeedback(isCorrect);
+    updateSidebar();
+    nextBtn.disabled = false;
+  }
+
+  function showFeedback(isCorrect) {
+    const feedback = document.getElementById('feedback');
+    const q = questions[currentIndex];
+    if (isCorrect) {
+      feedback.textContent = "Correct! Explanation: " + q.explanation;
+      feedback.className = "feedback correct";
+    } else {
+      feedback.textContent = `Incorrect. Correct answer: "${q.correct}". Explanation: ${q.explanation}`;
+      feedback.className = "feedback incorrect";
+    }
+  }
+
+  function updateSidebar() {
+    questionList.innerHTML = '';
+    questions.forEach((q, i) => {
+      const item = document.createElement('div');
+      item.className = 'question-item';
+      const truncatedQ = q.question.length > 60 ? q.question.slice(0, 57) + '...' : q.question;
+      item.textContent = `${i + 1}. ${truncatedQ}`;
+
+      if (userAnswers[i]) {
+        item.classList.add(userAnswers[i].isCorrect ? 'correct' : 'incorrect');
+      }
+      if (i === currentIndex) {
+        item.classList.add('current');
+      }
+
+      item.onclick = () => loadQuestion(i);
+
+      questionList.appendChild(item);
+    });
+  }
+
+  nextBtn.onclick = () => {
+    if (currentIndex < questions.length - 1) {
+      loadQuestion(currentIndex + 1);
+    }
+  };
+
+  loadQuestion();
+</script>
+
+</body>
+</html>
